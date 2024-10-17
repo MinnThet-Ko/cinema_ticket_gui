@@ -5,6 +5,7 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -38,7 +39,7 @@ public class CustomerEntryWindow {
 		this.entryMode = "INSERT";
 		initializeComponents();
 	}
-	
+
 	public CustomerEntryWindow(Customer customer) {
 		this.selectedCustomer = customer;
 		this.customerDAO = new CustomerDao();
@@ -105,8 +106,27 @@ public class CustomerEntryWindow {
 		this.customerFrame.setSize(500, 500);
 		this.customerFrame.setVisible(true);
 		this.customerFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
+
 		handleSubmitEvent();
+	}
+
+	public String validateInput() {
+		String message = new String();
+		if (this.nameInput.getText().isEmpty()) {
+			message = message + "Name cannot be empty.\n";
+		}
+
+		if (this.emailInput.getText().isEmpty()) {
+			message = message + "Email cannot be empty.\n";
+		} else if (!this.emailInput.getText().contains("@")) {
+			message = message + "Email does not match the format.\n";
+		}
+
+		if (this.addressInput.getText().isEmpty()) {
+			message = message + "Address cannot be empty.\n";
+		}
+
+		return message;
 	}
 
 	public void clearInput() {
@@ -120,26 +140,31 @@ public class CustomerEntryWindow {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Customer customer = new Customer();
-				customer.setName(nameInput.getText());
-				customer.setEmail(emailInput.getText());
-				customer.setAddress(addressInput.getText());
-				try {
-					if(entryMode.equals("INSERT")) {
-					customerDAO.create(customer);
-					}else  if(entryMode.equals("UPDATE")) {
-						customer.setId(selectedCustomer.getId());
-						customerDAO.updateEntity(customer);
-					}
-					JOptionPane.showMessageDialog(customerFrame, "Successfully created customer.");
-				} catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-					JOptionPane.showMessageDialog(customerFrame, "Cannot create customer.");
-				} finally {
-					clearInput();
-				}
+				String validationMessage = validateInput();
 
+				if (validationMessage.isEmpty()) {
+					Customer customer = new Customer();
+					customer.setName(nameInput.getText());
+					customer.setEmail(emailInput.getText());
+					customer.setAddress(addressInput.getText());
+					try {
+						if (entryMode.equals("INSERT")) {
+							customerDAO.create(customer);
+						} else if (entryMode.equals("UPDATE")) {
+							customer.setId(selectedCustomer.getId());
+							customerDAO.updateEntity(customer);
+						}
+						JOptionPane.showMessageDialog(customerFrame, "Successfully created customer.");
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+						JOptionPane.showMessageDialog(customerFrame, "Cannot create customer.");
+					} finally {
+						clearInput();
+					}
+				} else {
+					JOptionPane.showMessageDialog(customerFrame, validationMessage);
+				}
 			}
 		});
 	}
